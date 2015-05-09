@@ -17,7 +17,7 @@ def main():
 
     #input:
     path = 'downloads'
-    show = 'house'
+    show = 'Dexter'
 
     show = ' '.join(splitter.split(show))
 
@@ -25,7 +25,7 @@ def main():
     ignore   = re.compile(r'[^nfo$|sfv$]')  #files we want to ignore
     #aviFiles = re.compile(r'.*\.avi$')  #.avi files
     season   = re.compile(r's(\d{1,2})', re.I)          #format: House.S08E03.HDTV.XviD-LOL
-    season2  = re.compile(r'([1-9])\d\d')               #format:  house.805.hdtv-lol
+    season2  = re.compile(r'([1-9])\d\d')               #format: house.805.hdtv-lol
     title    = re.compile(r'(^%s)[ -.]' % show, re.I)   #Title of show
 
     #creates folder with incoming name if it does not exist:
@@ -36,22 +36,33 @@ def main():
     else:
         print('%s exists!' % folder)
 
+    #creates folder for all .txt files:
+    txt_folder = os.path.join(path, 'txt')
+    if not os.path.exists(txt_folder):
+        os.mkdir(txt_folder)
+        print('txt was created')
+    else:
+        print('txt exists!')
+
     #sort by title:
     for root, dirs, files in os.walk(path):
         for name in files:
             splittedName = ' '.join(splitter.split(name))
 
-            if title.search(splittedName):
+            if splittedName.endswith("nfo") or splittedName.endswith("sfv") :
+                os.remove(os.path.join(root, name))
+            elif splittedName.endswith("txt"):
+                src = os.path.join(root, name)
+                des = os.path.join(txt_folder, name)
+                shutil.move(src, des)
+            elif title.search(splittedName):
                 src = os.path.join(root, name)
                 des = os.path.join(folder, name)
                 shutil.move(src, des)
-            else:
-                continue
 
     #sort by season:
     for root, dirs, files in os.walk(folder):
         for name in files:
-
             if season.search(name):
                 snum = int(season.search(name).group(1))
             elif season2.search(name):
@@ -72,6 +83,15 @@ def main():
             else:
                 shutil.move(src, des)
 
+    #remove empty dirs:
+    for root, dirs, files in os.walk(path, topdown=False):
+        for name in dirs:
+            tmp = os.path.join(root, name)
+            if not os.listdir(tmp):
+                print('%s was removed' % tmp)
+                os.removedirs(tmp)
+            else:
+                continue
 
 
 if __name__ == "__main__":
